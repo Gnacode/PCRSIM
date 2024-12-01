@@ -1,0 +1,12 @@
+{
+    "Your_Email_for_an_HTMLReport": "lt@gnacode.com",
+    "FASTA_examples": [
+        "Ebola Virus (Zaire ebolavirus): NC_002549",
+        "Marburg Virus (Marburg marburgvirus): NC_001608",
+        "H5N1 Avian Influenza (Influenza A virus): CY115771",
+        "HIV-1 (Human Immunodeficiency Virus): NC_001802",
+        "Human telomerase reverse transcriptase: NM_198253",
+        "Bioluminescent enzyme (Luciferase) from firefly: NM_001293166",
+        "Human programmed cell death protein 1 (PD-1): NM_005018"
+    ]
+}
