@@ -51,7 +51,7 @@ def design_primers(sequence):
         'PRIMER_MAX_GC': 80.0,
     }
     try:
-        results = primer3.bindings.designPrimers(seq_args, global_args)
+        results = primer3.bindings.design_primers(seq_args, global_args)
         primer_pairs = []
         if 'PRIMER_LEFT_NUM_RETURNED' in results and results['PRIMER_LEFT_NUM_RETURNED'] > 0:
             for i in range(results['PRIMER_LEFT_NUM_RETURNED']):
@@ -98,186 +98,231 @@ def add_product_region_shapes(shapes, product_start, product_end, bases_per_row,
             )
         )
 
-def plot_sequence_with_primers(sequence, primer_pairs, target_aspect_ratio=1.5):
-    if not sequence:
+def plot_sequence_with_primers(sequence, primer_pairs, target_aspect_ratio=1.5, max_sequence_length=50000):
+    """
+    Plot a DNA sequence with primers. If the sequence length exceeds `max_sequence_length`,
+    only plot primers and products without the full sequence.
+    """
+    if len(sequence) > max_sequence_length:
+        # Skip sequence visualization, show primers and products only
         fig = go.Figure()
         fig.update_layout(
-            title="[no sequence listed]",
-            xaxis=dict(visible=False),
-            yaxis=dict(visible=False),
-            plot_bgcolor="white",
-            paper_bgcolor="white",
+            title=f"DNA Sequence Visualization (sequence length: {len(sequence)} bases, showing primers and products only)",
+            xaxis=dict(title="Base Position", showgrid=True),
+            yaxis=dict(title="Layer", visible=False),  # Hide unused y-axis
+            template="plotly_white"
         )
-        return fig
 
-    # Define colors for bases and primers
-    base_colors = {"A": "red", "T": "green", "C": "blue", "G": "yellow"}
-    color_palette = itertools.cycle([
-        "blue", "red", "green", "orange", "purple", "brown", "cyan", "magenta"
-    ])
-    primer_colors = [next(color_palette) for _ in range(len(primer_pairs))]
+        for index, primer in enumerate(primer_pairs):
+            primer_color = f"rgba({(index * 35) % 255}, {(index * 70) % 255}, {(index * 105) % 255}, 0.8)"
+            product_color = f"rgba({(index * 35) % 255}, {(index * 70) % 255}, {(index * 105) % 255}, 0.3)"
 
-    # Determine optimal bases per row dynamically
-    total_bases = len(sequence)
-    bases_per_row = int((total_bases * target_aspect_ratio) ** 0.5)
-    total_rows = (total_bases + bases_per_row - 1) // bases_per_row
+            # Primer positions
+            left_start = primer["Left Position"]
+            left_end = left_start + len(primer["Left Primer"]) - 1
+            right_start = primer["Right Position"]
+            right_end = right_start + len(primer["Right Primer"]) - 1
 
-    # Generate sequence data
-    x_vals, y_vals, dot_colors, text_vals, hover_texts = [], [], [], [], []
-    for i, base in enumerate(sequence):
-        x_vals.append(i % bases_per_row)  # Column index
-        y_vals.append(i // bases_per_row)  # Row index
-        dot_colors.append(base_colors.get(base, "gray"))  # Use base colors
-        text_vals.append(base)  # Base letters for overlay
-        hover_texts.append(f"Base: {base}<br>Position: {i + 1}")
-
-    # Create traces for dots and letters
-    dots_trace = go.Scatter(
-        x=x_vals,
-        y=y_vals,
-        mode="markers",
-        marker=dict(
-            size=6,
-            color=[f"rgba({int(mcolors.to_rgb(base_colors[base])[0]*255)},"
-                   f"{int(mcolors.to_rgb(base_colors[base])[1]*255)},"
-                   f"{int(mcolors.to_rgb(base_colors[base])[2]*255)},0.2)" for base in sequence],
-        ),
-        name="Colored Dots",  # Legend for dots
-        hoverinfo="text",
-        hovertext=hover_texts,
-        visible=True,  # Default ON
-    )
-
-    letters_trace = go.Scatter(
-        x=x_vals,
-        y=y_vals,
-        mode="text",
-        text=text_vals,
-        textfont=dict(size=5),
-        hoverinfo="text",
-        hovertext=hover_texts,
-        name="Base Letters",  # Legend for letters
-        visible=False,  # Default OFF
-    )
-
-    # Consolidate primers and products
-    primers_traces = []
-    products_traces = []
-
-    # Updated portion of the `plot_sequence_with_primers` function to handle multi-row primers
-
-    for index, primer in enumerate(primer_pairs):
-        primer_color_name = primer_colors[index]
-        primer_color_rgb = mcolors.to_rgb(primer_color_name)  # Convert name to RGB
-        dark_color = f"rgba({int(primer_color_rgb[0]*255)},{int(primer_color_rgb[1]*255)},{int(primer_color_rgb[2]*255)},0.8)"
-        light_color = f"rgba({int(primer_color_rgb[0]*255)},{int(primer_color_rgb[1]*255)},{int(primer_color_rgb[2]*255)},0.3)"  # Light shade
-
-        # Fully span the left and right primers
-        left_start = primer["Left Position"]
-        left_end = left_start + len(primer["Left Primer"]) - 1
-        right_start = primer["Right Position"]
-        right_end = right_start + len(primer["Right Primer"]) - 1
-
-        # Handle multi-row left primer
-        left_x_vals, left_y_vals = [], []
-        for pos in range(left_start, left_end + 1):
-            left_x_vals.append(pos % bases_per_row)
-            left_y_vals.append(pos // bases_per_row)
-            if pos % bases_per_row == bases_per_row - 1:
-                left_x_vals.append(None)  # Break line for new row
-                left_y_vals.append(None)
-
-        # Handle multi-row right primer
-        right_x_vals, right_y_vals = [], []
-        for pos in range(right_start, right_end + 1):
-            right_x_vals.append(pos % bases_per_row)
-            right_y_vals.append(pos // bases_per_row)
-            if pos % bases_per_row == bases_per_row - 1:
-                right_x_vals.append(None)  # Break line for new row
-                right_y_vals.append(None)
-
-        # Add left and right primers as one trace
-        primers_traces.append(go.Scatter(
-            x=left_x_vals + [None] + right_x_vals,
-            y=left_y_vals + [None] + right_y_vals,
-            mode="lines",
-            line=dict(color=dark_color, width=4),
-            name=f"Primer Pair {index + 1}",
-            hoverinfo="text",
-            hovertext=f"Primer Pair {index + 1}<br>Left Primer: {primer['Left Primer']}<br>Right Primer: {primer['Right Primer']}",
-        ))
-
-        # Product regions
-        product_start = left_end + 1
-        product_end = right_start - 1
-
-        if product_start <= product_end:
-            product_x_vals = []
-            product_y_vals = []
-
-            start_row = product_start // bases_per_row
-            end_row = product_end // bases_per_row
-
-            for row in range(start_row, end_row + 1):
-                row_start = row * bases_per_row
-                row_end = row_start + bases_per_row - 1
-
-                current_start = max(product_start, row_start)
-                current_end = min(product_end, row_end)
-
-                x_start = current_start % bases_per_row
-                y_start = current_start // bases_per_row
-                x_end = current_end % bases_per_row
-                y_end = current_end // bases_per_row
-
-                product_x_vals += [x_start, x_end, None]
-                product_y_vals += [y_start, y_end, None]
-
-            products_traces.append(go.Scatter(
-                x=product_x_vals,
-                y=product_y_vals,
+            fig.add_trace(go.Scatter(
+                x=[left_start, left_end],
+                y=[0, 0],
                 mode="lines",
-                line=dict(color=light_color, width=2),
-                name=f"Product {index + 1}",
-                hoverinfo="text",
-                hovertext=f"Product {index + 1}<br>Size: {primer['Product Size']} bases",
+                line=dict(color=primer_color, width=4),
+                name=f"Primer Pair {index + 1} (Left)"
             ))
 
+            fig.add_trace(go.Scatter(
+                x=[right_start, right_end],
+                y=[0, 0],
+                mode="lines",
+                line=dict(color=primer_color, width=4),
+                name=f"Primer Pair {index + 1} (Right)"
+            ))
 
-    # Combine traces
-    traces = [dots_trace, letters_trace] + primers_traces + products_traces
+            # Product regions
+            product_start = left_end + 1
+            product_end = right_start - 1
+            if product_start <= product_end:
+                fig.add_trace(go.Scatter(
+                    x=[product_start, product_end],
+                    y=[0, 0],
+                    mode="lines",
+                    line=dict(color=product_color, width=2, dash="dash"),
+                    name=f"Product {index + 1}"
+                ))
 
-    # Dynamic height and width calculation
-    plot_height = 800
-    plot_width = int(plot_height * target_aspect_ratio)
+        return fig
 
-    # Define layout
-    layout = go.Layout(
-        title="DNA Sequence Visualization with Primer Mapping",
-        xaxis=dict(
-            title="Column Index (Base Position in Row)",
-            tickvals=list(range(0, bases_per_row, max(1, bases_per_row // 10))),
-            showgrid=True,
-            zeroline=False,
-            scaleanchor="y",
-        ),
-        yaxis=dict(
-            title="Row Index",
-            tickvals=list(range(0, total_rows, max(1, total_rows // 10))),
-            autorange="reversed",
-            showgrid=True,
-        ),
-        height=plot_height,
-        width=plot_width,
-        margin=dict(l=40, r=40, t=40, b=40),
-        plot_bgcolor="white",
-        paper_bgcolor="white",
-        font=dict(color="black"),
-        legend=dict(
-            itemsizing="constant",
-            title="Legend",
-        ),
-    )
+    else:
+
+        # Define colors for bases and primers
+        base_colors = {"A": "red", "T": "green", "C": "blue", "G": "yellow"}
+        color_palette = itertools.cycle([
+            "blue", "red", "green", "orange", "purple", "brown", "cyan", "magenta"
+        ])
+        primer_colors = [next(color_palette) for _ in range(len(primer_pairs))]
+
+        # Determine optimal bases per row dynamically
+        total_bases = len(sequence)
+        bases_per_row = int((total_bases * target_aspect_ratio) ** 0.5)
+        total_rows = (total_bases + bases_per_row - 1) // bases_per_row
+
+        # Generate sequence data
+        x_vals, y_vals, dot_colors, text_vals, hover_texts = [], [], [], [], []
+        for i, base in enumerate(sequence):
+            x_vals.append(i % bases_per_row)  # Column index
+            y_vals.append(i // bases_per_row)  # Row index
+            dot_colors.append(base_colors.get(base, "gray"))  # Use base colors
+            text_vals.append(base)  # Base letters for overlay
+            hover_texts.append(f"Base: {base}<br>Position: {i + 1}")
+
+        # Create traces for dots and letters
+        dots_trace = go.Scatter(
+            x=x_vals,
+            y=y_vals,
+            mode="markers",
+            marker=dict(
+                size=6,
+                color=[f"rgba({int(mcolors.to_rgb(base_colors[base])[0]*255)},"
+                    f"{int(mcolors.to_rgb(base_colors[base])[1]*255)},"
+                    f"{int(mcolors.to_rgb(base_colors[base])[2]*255)},0.2)" for base in sequence],
+            ),
+            name="Colored Dots",  # Legend for dots
+            hoverinfo="text",
+            hovertext=hover_texts,
+            visible=True,  # Default ON
+        )
+
+        letters_trace = go.Scatter(
+            x=x_vals,
+            y=y_vals,
+            mode="text",
+            text=text_vals,
+            textfont=dict(size=5),
+            hoverinfo="text",
+            hovertext=hover_texts,
+            name="Base Letters",  # Legend for letters
+            visible=False,  # Default OFF
+        )
+
+        # Consolidate primers and products
+        primers_traces = []
+        products_traces = []
+
+        # Updated portion of the `plot_sequence_with_primers` function to handle multi-row primers
+
+        for index, primer in enumerate(primer_pairs):
+            primer_color_name = primer_colors[index]
+            primer_color_rgb = mcolors.to_rgb(primer_color_name)  # Convert name to RGB
+            dark_color = f"rgba({int(primer_color_rgb[0]*255)},{int(primer_color_rgb[1]*255)},{int(primer_color_rgb[2]*255)},0.8)"
+            light_color = f"rgba({int(primer_color_rgb[0]*255)},{int(primer_color_rgb[1]*255)},{int(primer_color_rgb[2]*255)},0.3)"  # Light shade
+
+            # Fully span the left and right primers
+            left_start = primer["Left Position"]
+            left_end = left_start + len(primer["Left Primer"]) - 1
+            right_start = primer["Right Position"]
+            right_end = right_start + len(primer["Right Primer"]) - 1
+
+            # Handle multi-row left primer
+            left_x_vals, left_y_vals = [], []
+            for pos in range(left_start, left_end + 1):
+                left_x_vals.append(pos % bases_per_row)
+                left_y_vals.append(pos // bases_per_row)
+                if pos % bases_per_row == bases_per_row - 1:
+                    left_x_vals.append(None)  # Break line for new row
+                    left_y_vals.append(None)
+
+            # Handle multi-row right primer
+            right_x_vals, right_y_vals = [], []
+            for pos in range(right_start, right_end + 1):
+                right_x_vals.append(pos % bases_per_row)
+                right_y_vals.append(pos // bases_per_row)
+                if pos % bases_per_row == bases_per_row - 1:
+                    right_x_vals.append(None)  # Break line for new row
+                    right_y_vals.append(None)
+
+            # Add left and right primers as one trace
+            primers_traces.append(go.Scatter(
+                x=left_x_vals + [None] + right_x_vals,
+                y=left_y_vals + [None] + right_y_vals,
+                mode="lines",
+                line=dict(color=dark_color, width=4),
+                name=f"Primer Pair {index + 1}",
+                hoverinfo="text",
+                hovertext=f"Primer Pair {index + 1}<br>Left Primer: {primer['Left Primer']}<br>Right Primer: {primer['Right Primer']}",
+            ))
+
+            # Product regions
+            product_start = left_end + 1
+            product_end = right_start - 1
+
+            if product_start <= product_end:
+                product_x_vals = []
+                product_y_vals = []
+
+                start_row = product_start // bases_per_row
+                end_row = product_end // bases_per_row
+
+                for row in range(start_row, end_row + 1):
+                    row_start = row * bases_per_row
+                    row_end = row_start + bases_per_row - 1
+
+                    current_start = max(product_start, row_start)
+                    current_end = min(product_end, row_end)
+
+                    x_start = current_start % bases_per_row
+                    y_start = current_start // bases_per_row
+                    x_end = current_end % bases_per_row
+                    y_end = current_end // bases_per_row
+
+                    product_x_vals += [x_start, x_end, None]
+                    product_y_vals += [y_start, y_end, None]
+
+                products_traces.append(go.Scatter(
+                    x=product_x_vals,
+                    y=product_y_vals,
+                    mode="lines",
+                    line=dict(color=light_color, width=2),
+                    name=f"Product {index + 1}",
+                    hoverinfo="text",
+                    hovertext=f"Product {index + 1}<br>Size: {primer['Product Size']} bases",
+                ))
+
+
+        # Combine traces
+        traces = [dots_trace, letters_trace] + primers_traces + products_traces
+
+        # Dynamic height and width calculation
+        plot_height = 800
+        plot_width = int(plot_height * target_aspect_ratio)
+
+        # Define layout
+        layout = go.Layout(
+            title="DNA Sequence Visualization with Primer Mapping",
+            xaxis=dict(
+                title="Column Index (Base Position in Row)",
+                tickvals=list(range(0, bases_per_row, max(1, bases_per_row // 10))),
+                showgrid=True,
+                zeroline=False,
+                scaleanchor="y",
+            ),
+            yaxis=dict(
+                title="Row Index",
+                tickvals=list(range(0, total_rows, max(1, total_rows // 10))),
+                autorange="reversed",
+                showgrid=True,
+            ),
+            height=plot_height,
+            width=plot_width,
+            margin=dict(l=40, r=40, t=40, b=40),
+            plot_bgcolor="white",
+            paper_bgcolor="white",
+            font=dict(color="black"),
+            legend=dict(
+                itemsizing="constant",
+                title="Legend",
+            ),
+        )
 
     return go.Figure(data=traces, layout=layout)
 
@@ -363,8 +408,8 @@ def calculate_modified_efficiency(primer_pair, product_length, results, index):
     right_primer_sequence = primer_pair['Right Primer']
 
     # Calculate melting temperatures for both primers
-    left_tm = primer3.calcTm(left_primer_sequence)
-    right_tm = primer3.calcTm(right_primer_sequence)
+    left_tm = primer3.calc_tm(left_primer_sequence)
+    right_tm = primer3.calc_tm(right_primer_sequence)
     average_tm = (left_tm + right_tm) / 2
 
     # GC content
@@ -547,28 +592,62 @@ app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 app.layout = dbc.Container(
     [
         html.H1("PCR SIM DASHBOARD"),
-        dcc.Input(id="fasta-id", placeholder="Enter FASTA ID...", type="text", className="mb-3"),
+        html.H5("by K. Soikum, S.Soikum and L.Thomsen, 2024"),
+        dbc.Row(
+            [
+                dcc.Dropdown(
+                    id="fasta-dropdown",
+                    options=[
+                        {"label": "Ebola Virus (Zaire ebolavirus): NC_002549", "value": "NC_002549"},
+                        {"label": "Marburg Virus (Marburg marburgvirus): NC_001608", "value": "NC_001608"},
+                        {"label": "H5N1 Avian Influenza (Influenza A virus): CY115771", "value": "CY115771"},
+                        {"label": "HIV-1 (Human Immunodeficiency Virus): NC_001802", "value": "NC_001802"},
+                        {"label": "Human telomerase reverse transcriptase: NM_198253", "value": "NM_198253"},
+                        {"label": "Bioluminescent enzyme (Luciferase) from firefly: NM_001293166", "value": "NM_001293166"},
+                        {"label": "Human programmed cell death protein 1 (PD-1): NM_005018", "value": "NM_005018"},
+                    ],
+                    placeholder="Enter or select a FASTA ID...",
+                    className="mb-3",
+                    searchable=True,
+                    clearable=True,
+                    style={"width": "100%"},
+                ),
+            ],
+            className="mb-3",
+        ),
         dbc.Button("Fetch and Design Primers", id="fetch-button", color="primary", className="mb-3"),
         dbc.Tabs(
-    [
-        dbc.Tab(label="Visualization", tab_id="visualization"),
-        dbc.Tab(label="Primer Table", tab_id="primer-table"),
-        dbc.Tab(label="PCR Simulations", tab_id="pcr-simulations"),
-        dbc.Tab(label="Capillary Electrophoresis", tab_id="capillary-electrophoresis"),  # Add this line
-        ],
-        id="tabs",
-        active_tab="visualization",
-    ),
+            [
+                dbc.Tab(label="Visualization", tab_id="visualization"),
+                dbc.Tab(label="Primer Table", tab_id="primer-table"),
+                dbc.Tab(label="PCR Simulations", tab_id="pcr-simulations"),
+                dbc.Tab(label="Capillary Electrophoresis", tab_id="capillary-electrophoresis"),
+            ],
+            id="tabs",
+            active_tab="visualization",
+        ),
         dbc.Spinner(
             [
                 dcc.Store(id="store"),
                 html.Div(id="tab-content", className="p-4"),
             ],
-            delay_show=100,  # Spinner is displayed after a slight delay
+            delay_show=100,
         ),
     ],
     fluid=True,
 )
+
+
+
+#@app.callback(
+#    Output("fasta-id", "value"),
+#    [Input("dropdown", "value")]
+#)
+#def populate_input_from_dropdown(selected_value):
+#    if selected_value:
+#        return selected_value
+#    return ""
+
 
 @app.callback(
     Output("tab-content", "children"),
@@ -628,7 +707,7 @@ def render_tab_content(active_tab, data):
 @app.callback(
     Output("store", "data"),
     [Input("fetch-button", "n_clicks")],
-    [State("fasta-id", "value")]
+    [State("fasta-dropdown", "value")]
 )
 def generate_data(n_clicks, fasta_id):
     if not n_clicks or not fasta_id:
@@ -638,7 +717,7 @@ def generate_data(n_clicks, fasta_id):
         sequence = fetch_sequence_by_fasta(fasta_id)
         
         # Fetch primers and full results from Primer3
-        full_results = primer3.bindings.designPrimers(
+        full_results = primer3.bindings.design_primers(
             {
                 'SEQUENCE_ID': 'example',
                 'SEQUENCE_TEMPLATE': sequence,
@@ -675,7 +754,8 @@ def generate_data(n_clicks, fasta_id):
         ]
 
         # Generate visualization
-        fig = plot_sequence_with_primers(sequence, primers)
+        fig = plot_sequence_with_primers(sequence, primers, max_sequence_length=50000)
+
 
         # Pass full_results to simulate_pcr_amplification
         amplification_curves, melting_curves = simulate_pcr_amplification(primers, sequence, full_results)
