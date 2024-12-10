@@ -1,0 +1,8 @@
+Bio==1.7.1
+biopython==1.84
+dash==2.18.2
+dash_bootstrap_components==1.6.0
+matplotlib==3.9.3
+numpy==2.2.0
+plotly==5.24.1
+primer3_py==2.0.3
