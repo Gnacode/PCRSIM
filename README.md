@@ -1,10 +1,6 @@
 # GNACODE's PCRSIM and Primer Design
 
-We made this tool to combine the Primer3 design algorithms available via the Python library "primer3"
-
-Hereto, we also publish our most interesting application in scientific journals and host the public repositories for those publications here as well
-
-[**MLM-IV DOCUMENTION IS HERE**](https://gnacode.github.io/PCRSIM/)
+We made this tool to combine the Primer3 design algorithms available via the Python library "primer3". The [**history of primer3 is here**](https://github.com/Gnacode/PCRSIM/blob/main/docs/primer3.md),  the program can 
 
 ## Authors
 
