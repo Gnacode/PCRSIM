@@ -26,7 +26,7 @@ The code:
 4. Visualizes DNA sequences and primer locations.
 5. Simulates capillary electrophoresis for amplicons.
 
-### Libraries Used
+## Libraries Used
 - `os`, `sys`: Handle file system and script paths.
 - `primer3`: Designs primers for DNA sequences.
 - `dash`, `dash_table`, `dcc`, `html`: Build an interactive web-based dashboard.
@@ -39,7 +39,7 @@ The code:
 
 ## Functions
 
-### 1. **`clean_dna_sequence(dna_sequence)`**
+## 1. **`clean_dna_sequence(dna_sequence)`**
 Cleans and validates a DNA sequence by removing whitespace and ensuring it contains only valid bases (A, T, C, G).
 
 #### Args:
@@ -53,7 +53,7 @@ Cleans and validates a DNA sequence by removing whitespace and ensuring it conta
 
 ---
 
-### 2. **`fetch_sequence_by_fasta(fasta_id)`**
+## 2. **`fetch_sequence_by_fasta(fasta_id)`**
 Fetches a DNA sequence from the NCBI nucleotide database using a FASTA ID.
 
 #### Args:
@@ -67,7 +67,7 @@ Fetches a DNA sequence from the NCBI nucleotide database using a FASTA ID.
 
 ---
 
-### 3. **`design_primers(sequence)`**
+## 3. **`design_primers(sequence)`**
 Designs PCR primers for a given DNA sequence using Primer3.
 
 #### Args:
@@ -78,7 +78,7 @@ Designs PCR primers for a given DNA sequence using Primer3.
 
 ---
 
-### 4. **`add_product_region_shapes(shapes, product_start, product_end, bases_per_row, light_color)`**
+## 4. **`add_product_region_shapes(shapes, product_start, product_end, bases_per_row, light_color)`**
 Adds rectangle shapes representing product regions to a DNA visualization.
 
 #### Args:
@@ -89,7 +89,7 @@ Adds rectangle shapes representing product regions to a DNA visualization.
 
 ---
 
-### 5. **`plot_sequence_with_primers(sequence, primer_pairs, target_aspect_ratio=1.5, max_sequence_length=50000)`**
+## 5. **`plot_sequence_with_primers(sequence, primer_pairs, target_aspect_ratio=1.5, max_sequence_length=50000)`**
 Visualizes a DNA sequence and highlights primer positions using Plotly.
 
 #### Args:
@@ -103,7 +103,7 @@ Visualizes a DNA sequence and highlights primer positions using Plotly.
 
 ---
 
-### 6. **`reverse_complement(sequence)`**
+## 6. **`reverse_complement(sequence)`**
 Generates the reverse complement of a DNA sequence.
 
 #### Args:
@@ -114,7 +114,7 @@ Generates the reverse complement of a DNA sequence.
 
 ---
 
-### 7. **`calculate_tm(sequence)`**
+## 7. **`calculate_tm(sequence)`**
 Calculates the melting temperature (Tm) of a DNA sequence using the nearest-neighbor model.
 
 #### Args:
@@ -125,7 +125,7 @@ Calculates the melting temperature (Tm) of a DNA sequence using the nearest-neig
 
 ---
 
-### 8. **`adjust_efficiency(original_efficiency, product_length)`**
+## 8. **`adjust_efficiency(original_efficiency, product_length)`**
 Adjusts the amplification efficiency based on the product length.
 
 #### Args:
@@ -137,7 +137,7 @@ Adjusts the amplification efficiency based on the product length.
 
 ---
 
-### 9. **`find_product_length(primer_pair, sequence)`**
+## 9. **`find_product_length(primer_pair, sequence)`**
 Calculates the length of the PCR product based on primer positions.
 
 #### Args:
@@ -152,7 +152,7 @@ Calculates the length of the PCR product based on primer positions.
 
 ---
 
-### 10. **`simulate_pcr_amplification(primer_pairs, sequence, results)`**
+## 10. **`simulate_pcr_amplification(primer_pairs, sequence, results)`**
 Simulates PCR amplification and melting curves for given primers and sequences.
 
 #### Args:
@@ -166,7 +166,7 @@ Simulates PCR amplification and melting curves for given primers and sequences.
 
 ---
 
-### 11. **`simulate_capillary_electrophoresis(amplicon_lengths)`**
+## 11. **`simulate_capillary_electrophoresis(amplicon_lengths)`**
 Simulates capillary electrophoresis for given amplicon lengths.
 
 #### Args:
@@ -184,9 +184,9 @@ The dashboard includes:
 1. **Dropdown Menu**: Select or enter a FASTA ID.
 2. **Tabs**: 
    - Visualization: DNA and primers.
-   - Primer Table: Primer data.
-   - PCR Simulations: Amplification and melting curves.
-   - Capillary Electrophoresis: Electrophoresis plot.
+   - Primer Table: Primer data for 10 different primer sets, sorted by ranking
+   - PCR Simulations: Simulated qPCR amplification and melting curves.
+   - Capillary Electrophoresis: Simulated Capillary Electrophoresis plot.
 
 ### Callbacks
 1. **Fetch Data**: Fetches sequence and designs primers on button click.
