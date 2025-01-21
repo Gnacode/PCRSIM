@@ -31,13 +31,6 @@ MLM-IV-Analysis, uses a straight forward IV curve analysis outlined in Handout f
 MLM-IV-EEDF-Analysis, is a second method to fit for electron density [ne], and electron temperature [Te]. We found that an average of [Te]  we found in MLM-IV-Analysis and MLM-IV-EEDF-Analysis fits with the orignal [Te] provided for the simulation 
 ![Logo](https://github.com/Gnacode/PCRSIM/blob/main/docs/images/ce_view.png)
 
-- Electron Density (n_e) [Simpson]: 1.0497957915644494e+16
-- Electron Density (n_e) [Trapz]: 1.0497953882833564e+16
-- Electron Temperature (T_e) [Simpson]: 2.2881789687780754 eV
-- Electron Temperature (T_e) [Trapz]: 2.288175827279369 eV
-- Electron Temperature (T_e) [Simpson]: 26542.876037825674 K
-- Electron Temperature (T_e) [Trapz]: 26542.839596440677 K
----------------
 
 -------------
 
